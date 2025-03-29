@@ -83,8 +83,8 @@ WSGI_APPLICATION = 'PJ1.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mydjangodb',
-        'USER': 'mydjango',
+        'NAME': 'PJ1',  # 데이터베이스 이름
+        'USER': 'host',
         'PASSWORD': 'WJDghldls3150!@',
         'HOST': 'localhost',
         'PORT': '3306',
