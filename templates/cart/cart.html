@@ -1,0 +1,9 @@
+{% for item in cart_items %}
+    {{ item.product.name }} - {{ item.quantity }}
+    <a href="{% url 'remove_from_cart' item.id %}">삭제</a>
+    <form method="post" action="{% url 'update_cart' item.id %}">
+        {% csrf_token %}
+        <input type="number" name="quantity" value="{{ item.quantity }}">
+        <button type="submit">수량 변경</button>
+    </form>
+{% endfor %}

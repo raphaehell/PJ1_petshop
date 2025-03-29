@@ -1,0 +1,6 @@
+{{ order.id }} - {{ order.total_price }}
+{% for item in order_items %}
+    {{ item.cart_item.product.name }} - {{ item.quantity }}
+{% endfor %}
+{{ shipping_info.address }}
+<a href="{% url 'cancel_order' order.id %}">주문 취소</a>
