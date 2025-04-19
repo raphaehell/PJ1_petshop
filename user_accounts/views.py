@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, authenticate
 from .models import UserProfile, Address
 from .forms import UserProfileForm, AddressForm
+from django.contrib.auth.models import User
 
 def signup(request):
     if request.method == 'POST':
@@ -14,7 +15,7 @@ def signup(request):
             return redirect('profile')  # 회원가입 후 프로필 페이지로 리다이렉트
     else:
         form = UserCreationForm()
-    return render(request, 'account/signup.html', {'form': form})
+    return render(request, 'user_account/signup.html', {'form': form})
 
 def login_view(request):
     if request.method == 'POST':
@@ -28,7 +29,7 @@ def login_view(request):
                 return redirect('profile')  # 로그인 후 프로필 페이지로 리다이렉트
     else:
         form = AuthenticationForm()
-    return render(request, 'account/login.html', {'form': form})
+    return render(request, 'user_account/login.html', {'form': form})
 
 @login_required
 def profile(request):
@@ -53,5 +54,14 @@ def profile(request):
         user_profile_form = UserProfileForm(instance=user_profile)
         address_form = AddressForm(instance=address)
 
-    return render(request, 'account/profile.html',
+    return render(request, 'user_account/profile.html',
                   {'user_profile_form': user_profile_form, 'address_form': address_form})
+
+# user_accounts/ 경로에 사용자 목록 표시
+def user_list(request):
+    users = User.objects.all()
+    return render(request, 'user_account/user_list.html', {'users': users})
+
+# user_accounts/ 경로를 profile 페이지로 리다이렉트
+def user_accounts_main(request):
+    return redirect('profile')
