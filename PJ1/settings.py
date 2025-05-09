@@ -4,22 +4,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'YOUR_ACTUAL_SECRET_KEY')
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
-
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-ACCOUNT_LOGIN_METHODS = {'email'} 
-# settings.ACCOUNT_AUTHENTICATION_METHOD 대체
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*'] 
-# settings.ACCOUNT_EMAIL_REQUIRED, settings.ACCOUNT_USERNAME_REQUIRED 대체
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -43,7 +35,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'django.contrib.sitemaps',
     'django.contrib.flatpages',
-    'django.contrib.sites.migrations',
 ]
 
 MIDDLEWARE = [
@@ -54,7 +45,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',  # 추가
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'PJ1.urls'
@@ -77,19 +68,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'PJ1.wsgi.application'
 
-# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'PJ1',
         'USER': os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'WJDghldls3150!@'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'HOST': 'localhost',
         'PORT': '3306',
     }
 }
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -97,27 +86,22 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'ko-kr'
 TIME_ZONE = 'Asia/Seoul'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [str(BASE_DIR / 'static')]
 
-# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# allauth 설정 추가
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend', #account 관련부분 삭제
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 SITE_ID = 1
@@ -127,22 +111,16 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 
-# 소셜 로그인 설정
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'CLIENT_ID': 'YOUR_GOOGLE_CLIENT_ID',# 실제 구글 클라이언트 ID로 변경 필요
-        # 'CLIENT_ID': os.environ.get('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID'),
-        'CLIENT_SECRET': 'YOUR_GOOGLE_CLIENT_SECRET',#실제 구글 비번으로 변경 필요
-        # 'CLIENT_SECRET': os.environ.get('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET'),
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
+        'CLIENT_ID': os.environ.get('GOOGLE_CLIENT_ID', ''),
+        'CLIENT_SECRET': os.environ.get('GOOGLE_CLIENT_SECRET', ''),
+        'SCOPE': ['profile', 'email'],
     },
     'facebook': {
         'APP': {
-            'client_id': 'YOUR_FACEBOOK_APP_ID',
-            'secret': 'YOUR_FACEBOOK_APP_SECRET',
+            'client_id': os.environ.get('FACEBOOK_APP_ID', ''),
+            'secret': os.environ.get('FACEBOOK_APP_SECRET', ''),
             'key': '',
         },
         'SCOPE': ['email', 'public_profile'],
@@ -151,14 +129,13 @@ SOCIALACCOUNT_PROVIDERS = {
     },
     'kakao': {
         'APP': {
-            'client_id': 'YOUR_KAKAO_REST_API_KEY',
+            'client_id': os.environ.get('KAKAO_REST_API_KEY', ''),
             'secret': '',
             'key': '',
         }
     }
 }
 
-# Caching
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
@@ -166,4 +143,6 @@ CACHES = {
     }
 }
 
-KAKAO_API_KEY = os.getenv('KAKAO_REST_API_KEY','6532284ab7de940b523e395c1063087e')
+# ✅ 수정된 카카오 API 키 환경 변수 로드
+KAKAO_API_KEY = os.getenv('KAKAO_JAVASCRIPT_KEY')
+KAKAO_JAVASCRIPT_KEY = os.getenv("KAKAO_JAVASCRIPT_KEY")
