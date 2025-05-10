@@ -1,13 +1,15 @@
 from django.db import models
 
 class Hospital(models.Model):
-    kakao_id = models.CharField(max_length=100, unique=True)  # Kakao API 고유 id
+    kakao_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=200)
     address = models.CharField(max_length=300)
-    phone = models.CharField(max_length=50, blank=True)
+    phone = models.CharField(max_length=100, blank=True)
     url = models.URLField(blank=True)
-    x = models.FloatField()  # 경도
-    y = models.FloatField()  # 위도
+    x = models.CharField(max_length=50)
+    y = models.CharField(max_length=50)
+    
+    business_hours = models.CharField(max_length=200, blank=True)  # ✅ 운영시간 필드 추가
 
     def __str__(self):
         return self.name

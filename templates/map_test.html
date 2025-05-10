@@ -13,7 +13,7 @@
     #controls { padding: 10px; background: #f9f9f9; display: flex; gap: 10px; flex-wrap: wrap; }
     #searchBox { flex: 1; padding: 8px; }
     #searchBtn { padding: 8px 12px; }
-    #list { max-height: 300px; overflow-y: auto; margin: 10px 0; }
+    #list { max-height: 400px; overflow-y: auto; margin: 10px 0; }
     .place { border: 1px solid #ccc; margin-bottom: 5px; padding: 8px; cursor: pointer; }
     .place:hover { background: #f0f0f0; }
     .review-form { margin-top: 10px; }
@@ -33,53 +33,49 @@
   <button id="loadMoreBtn" style="display: none;">더 보기</button>
 
   <script>
-    let map, ps, markers = [], places = [], currentPage = 1, currentQuery = "동물병원", currentPosition = null;
+    let map, markers = [], currentPosition = null, currentQuery = "동물병원";
 
     function initMap(lat, lng) {
       const container = document.getElementById('map');
       const options = { center: new kakao.maps.LatLng(lat, lng), level: 4 };
       map = new kakao.maps.Map(container, options);
-      ps = new kakao.maps.services.Places();
       currentPosition = { lat, lng };
-      searchPlaces(currentQuery, 1);
+      fetchHospitalsFromBackend(lat, lng, currentQuery);
     }
 
-    function searchPlaces(query, page) {
-      const coord = new kakao.maps.LatLng(currentPosition.lat, currentPosition.lng);
-      const options = { location: coord, radius: 5000, page };
-      ps.keywordSearch(query, (data, status, pagination) => {
-        if (status === kakao.maps.services.Status.OK) {
-          if (page === 1) {
-            places = [];
-            clearMarkers();
-            document.getElementById('list').innerHTML = '';
-          }
-          places = places.concat(data);
-          renderPlaces(data);
-          currentPage = page;
-          if (pagination.hasNextPage) {
-            document.getElementById('loadMoreBtn').style.display = 'block';
-            document.getElementById('loadMoreBtn').onclick = () => searchPlaces(query, page + 1);
-          } else {
-            document.getElementById('loadMoreBtn').style.display = 'none';
-          }
-        }
-      }, options);
+    function fetchHospitalsFromBackend(lat, lng, query) {
+      fetch("{% url 'find_places' %}", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie("csrftoken")
+        },
+        body: JSON.stringify({ latitude: lat, longitude: lng, query: query })
+      })
+      .then(res => res.json())
+      .then(data => {
+        renderHospitals(data);
+      });
     }
 
-    function renderPlaces(data) {
+    function renderHospitals(places) {
       const list = document.getElementById('list');
-      data.forEach(place => {
+      list.innerHTML = "";
+      clearMarkers();
+
+      places.forEach(place => {
         const item = document.createElement('div');
         item.className = 'place';
         item.innerHTML = `
           <strong>${place.place_name}</strong><br>
           ${place.address_name}<br>
-          ${place.phone || '번호 없음'}
+          📞 ${place.phone}<br>
+          ⭐ ${place.avg_rating || "리뷰 없음"} (${place.review_count}건)<br>
+          🕒 운영시간: ${place.business_hours || '정보 없음'}
           <div class="review-form">
             <input type="number" min="1" max="5" placeholder="별점 (1-5)" class="rating">
             <textarea placeholder="후기를 작성하세요" class="comment"></textarea>
-            <button onclick="submitReview('${place.id}', this)">등록</button>
+            <button onclick="submitReview('${place.kakao_place_id}', this)">등록</button>
           </div>
         `;
         item.onclick = () => {
@@ -149,9 +145,9 @@
 
     document.getElementById('searchBtn').addEventListener('click', () => {
       const input = document.getElementById('searchBox').value.trim();
-      if (input) {
+      if (input && currentPosition) {
         currentQuery = input;
-        searchPlaces(input, 1);
+        fetchHospitalsFromBackend(currentPosition.lat, currentPosition.lng, input);
       }
     });
 

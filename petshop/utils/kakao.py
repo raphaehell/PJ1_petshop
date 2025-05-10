@@ -1,12 +1,10 @@
-# petshop/utils/kakao.py
-
 import requests
 from django.conf import settings
 
 def search_places_by_keyword(query, x, y, radius=5000):
     url = "https://dapi.kakao.com/v2/local/search/keyword.json"
     headers = {
-        "Authorization": f"KakaoAK {settings.KAKAO_API_KEY}",  # 또는 KAKAO_REST_API_KEY
+        "Authorization": f"KakaoAK {settings.KAKAO_API_KEY}",  # REST API 키
     }
     params = {
         "query": query,
@@ -29,8 +27,10 @@ def search_places_by_keyword(query, x, y, radius=5000):
             "detail": data,
         }
 
-    return data.get("documents", [])
+    documents = data.get("documents", [])
+    
+    # ✅ '운영시간' 필드 기본값 추가
+    for place in documents:
+        place['business_hours'] = "정보 없음"  # 또는 "카카오 장소 페이지 참조"
 
-    print(response.json())
-
-    print(f"[DEBUG] Kakao API Key: {settings.KAKAO_API_KEY}")
+    return documents

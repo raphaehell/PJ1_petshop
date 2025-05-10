@@ -57,6 +57,7 @@ def find_places_view(request):
                     'kakao_place_id': hospital.kakao_id,
                     'avg_rating': avg_rating,
                     'review_count': reviews.count(),
+                    'business_hours': hospital.business_hours or '운영시간 정보 없음',  # 운영시간 추가
                 })
 
             return JsonResponse(simplified_results, safe=False)
