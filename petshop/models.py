@@ -23,3 +23,30 @@ class Review(models.Model):
 
     def __str__(self):
         return f"[{self.hospital.name}] {self.rating}점 by {self.author}"
+
+class running(models.Model):
+    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='running')
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    status = models.CharField(max_length=20)  # 예: 'running', 'completed', 'canceled'
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[{self.hospital.name}] {self.status} from {self.start_time} to {self.end_time}"
+    
+    
+class dogtype(models.Model):
+    name = models.CharField(max_length=100)
+    breed = models.CharField(max_length=100)
+    age = models.PositiveIntegerField()
+    weight = models
+    sex = models.CharField(max_length=10)
+    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, related_name='dogtype')
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"{self.name} ({self.breed}) - {self.age} years old"
+    def __str__(self):
+        return f"{self.name} ({self.breed}) - {self.age} years old"
+    def __str__(self):
+        return f"{self.name} ({self.breed}) - {self.age} years old"
+# 중성화 여부/백신 여부/예방접종 여부/어떤 백신인지/특이사항 추가 필요
