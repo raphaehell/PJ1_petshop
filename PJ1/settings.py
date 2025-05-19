@@ -70,7 +70,7 @@ WSGI_APPLICATION = 'PJ1.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mariadb',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('DB_NAME', 'PJ1'),  
         'USER': os.environ.get('DB_USER', 'root'), 
         'PASSWORD': os.environ.get('DB_PASSWORD', 'WJDghldls3150!@'), 
