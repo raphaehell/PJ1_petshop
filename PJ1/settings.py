@@ -70,12 +70,12 @@ WSGI_APPLICATION = 'PJ1.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'PJ1',
-        'USER': os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'WJDghldls3150!@'),
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.mariadb',
+        'NAME': os.environ.get('DB_NAME', 'PJ1'),  
+        'USER': os.environ.get('DB_USER', 'root'), 
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'WJDghldls3150!@'), 
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'), 
+        'PORT': os.environ.get('DB_PORT', '3306'),    
         'OPTIONS': {
             'charset': 'utf8mb4',
         },
