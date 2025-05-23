@@ -1,157 +1,248 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>근처 동물병원 찾기</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  {% autoescape off %}
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_API_KEY }}&libraries=services"></script>
-  {% endautoescape %}
-  <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; }
-    #map { width: 100%; height: 400px; }
-    #controls { padding: 10px; background: #f9f9f9; display: flex; gap: 10px; flex-wrap: wrap; }
-    #searchBox { flex: 1; padding: 8px; }
-    #searchBtn { padding: 8px 12px; }
-    #list { max-height: 400px; overflow-y: auto; margin: 10px 0; }
-    .place { border: 1px solid #ccc; margin-bottom: 5px; padding: 8px; cursor: pointer; }
-    .place:hover { background: #f0f0f0; }
-    .review-form { margin-top: 10px; }
-    .review-form input, .review-form textarea { width: 100%; margin: 5px 0; }
-    .review-form button { padding: 6px 12px; }
-    #loadMoreBtn { padding: 10px; width: 100%; background: #eee; border: none; cursor: pointer; }
-  </style>
+    <meta charset="utf-8">
+    <title>근처 동물병원 찾기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/map_styles.css' %}">
+    <style>
+        /* 기존 스타일 유지 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        #map-container {
+            display: flex;
+            flex: 1;
+            height: 100%;
+        }
+        #map {
+            width: 70%;
+            height: 100%;
+        }
+        #sidebar {
+            width: 30%;
+            height: 100%;
+            overflow-y: auto;
+            border-left: 1px solid #ccc;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+        }
+        .place-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .place-item h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .place-item p {
+            margin: 3px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .place-item a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .place-item a:hover {
+            text-decoration: underline;
+        }
+        .average-rating {
+            font-weight: bold;
+            color: #f0ad4e;
+        }
+    </style>
 </head>
 <body>
-  <h2>📍 내 주변 동물병원 찾기</h2>
-  <div id="controls">
-    <input id="searchBox" type="text" placeholder="병원 이름, 지역 등을 입력하세요">
-    <button id="searchBtn">검색</button>
-  </div>
-  <div id="map"></div>
-  <div id="list"></div>
-  <button id="loadMoreBtn" style="display: none;">더 보기</button>
+    <div id="map-container">
+        <div id="map" style="width:100%;height:100%;"></div>
+        <div id="sidebar">
+            <h2>근처 동물병원</h2>
+            <div id="placesList">
+                <p>검색 결과가 여기에 표시됩니다.</p>
+            </div>
+        </div>
+    </div>
 
-  <script>
-    let map, markers = [], currentPosition = null, currentQuery = "동물병원";
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_JAVASCRIPT_KEY }}&libraries=services"></script>
+    <script>
+        var mapContainer = document.getElementById('map'),
+            mapOption = { 
+                center: new kakao.maps.LatLng(33.450701, 126.570667),
+                level: 3
+            };  
+        var map = new kakao.maps.Map(mapContainer, mapOption); 
+        var markers = [];
 
-    function initMap(lat, lng) {
-      const container = document.getElementById('map');
-      const options = { center: new kakao.maps.LatLng(lat, lng), level: 4 };
-      map = new kakao.maps.Map(container, options);
-      currentPosition = { lat, lng };
-      fetchHospitalsFromBackend(lat, lng, currentQuery);
-    }
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var lat = position.coords.latitude,
+                    lon = position.coords.longitude;
+                var locPosition = new kakao.maps.LatLng(lat, lon);
+                map.setCenter(locPosition);
+                
+                var currentMarker = new kakao.maps.Marker({
+                    map: map,
+                    position: locPosition,
+                    image: new kakao.maps.MarkerImage(
+                        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_round.png',
+                        new kakao.maps.Size(36, 37),
+                        { offset: new kakao.maps.Point(18, 37) }
+                    )
+                });
+                var infowindow = new kakao.maps.InfoWindow({content: '<div style="padding:5px;">현재 위치</div>'});
+                infowindow.open(map, currentMarker);
 
-    function fetchHospitalsFromBackend(lat, lng, query) {
-      fetch("{% url 'find_places' %}", {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie("csrftoken")
-        },
-        body: JSON.stringify({ latitude: lat, longitude: lng, query: query })
-      })
-      .then(res => res.json())
-      .then(data => {
-        renderHospitals(data);
-      });
-    }
+                searchPlaces(lat, lon);
 
-    function renderHospitals(places) {
-      const list = document.getElementById('list');
-      list.innerHTML = "";
-      clearMarkers();
+            }, function(error) {
+                console.error(error);
+                alert('현재 위치를 가져올 수 없습니다. 기본 위치로 검색합니다. (안양시청)');
+                var defaultLat = 37.394541,
+                    defaultLon = 126.956799;
+                var defaultLocPosition = new kakao.maps.LatLng(defaultLat, defaultLon);
+                map.setCenter(defaultLocPosition);
+                searchPlaces(defaultLat, defaultLon);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        } else {
+            alert('이 브라우저에서는 Geolocation을 지원하지 않습니다. 기본 위치로 검색합니다. (안양시청)');
+            var defaultLat = 37.394541,
+                defaultLon = 126.956799;
+            var defaultLocPosition = new kakao.maps.LatLng(defaultLat, defaultLon);
+            map.setCenter(defaultLocPosition);
+            searchPlaces(defaultLat, defaultLon);
+        }
 
-      places.forEach(place => {
-        const item = document.createElement('div');
-        item.className = 'place';
-        item.innerHTML = `
-          <strong>${place.place_name}</strong><br>
-          ${place.address_name}<br>
-          📞 ${place.phone}<br>
-          ⭐ ${place.avg_rating || "리뷰 없음"} (${place.review_count}건)<br>
-          🕒 운영시간: ${place.business_hours || '정보 없음'}
-          <div class="review-form">
-            <input type="number" min="1" max="5" placeholder="별점 (1-5)" class="rating">
-            <textarea placeholder="후기를 작성하세요" class="comment"></textarea>
-            <button onclick="submitReview('${place.kakao_place_id}', this)">등록</button>
-          </div>
-        `;
-        item.onclick = () => {
-          const pos = new kakao.maps.LatLng(place.y, place.x);
-          map.panTo(pos);
-        };
-        list.appendChild(item);
+        function searchPlaces(latitude, longitude) {
+            const query = "동물병원";
+            const url = "/vet/find-places/";
 
-        const marker = new kakao.maps.Marker({
-          map: map,
-          position: new kakao.maps.LatLng(place.y, place.x)
-        });
-        markers.push(marker);
-      });
-    }
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    latitude: latitude,
+                    longitude: longitude,
+                    query: query
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                removeAllMarkers();
+                displayPlaces(data);
+            })
+            .catch(error => {
+                console.error('Error fetching places:', error);
+                alert('장소 정보를 가져오는 데 실패했습니다.');
+            });
+        }
 
-    function clearMarkers() {
-      markers.forEach(marker => marker.setMap(null));
-      markers = [];
-    }
+        function displayPlaces(places) {
+            const listEl = document.getElementById('placesList');
+            listEl.innerHTML = '';
 
-    function submitReview(kakao_id, btn) {
-      const parent = btn.closest('.review-form');
-      const rating = parent.querySelector('.rating').value;
-      const comment = parent.querySelector('.comment').value;
+            if (places.error) {
+                listEl.innerHTML = `<p style="color: red;">${places.error}</p>`;
+                return;
+            }
+            if (places.message) {
+                listEl.innerHTML = `<p>${places.message}</p>`;
+                return;
+            }
+            if (places.length === 0) {
+                listEl.innerHTML = '<p>검색 결과가 없습니다.</p>';
+                return;
+            }
 
-      if (!rating || !comment) {
-        alert("별점과 후기를 모두 입력해주세요.");
-        return;
-      }
+            places.forEach((place, index) => {
+                var placePosition = new kakao.maps.LatLng(place.y, place.x),
+                    marker = addMarker(placePosition, index);
 
-      fetch("{% url 'submit_review' %}", {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie("csrftoken")
-        },
-        body: JSON.stringify({ kakao_place_id: kakao_id, rating, comment })
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message || data.error);
-        parent.querySelector('.rating').value = '';
-        parent.querySelector('.comment').value = '';
-      });
-    }
+                kakao.maps.event.addListener(marker, 'click', function() {
+                    var infowindow = new kakao.maps.InfoWindow({
+                        content: `<div style="padding:5px;">
+                                    <strong>${place.place_name}</strong><br>
+                                    ${place.address_name}<br>
+                                    ${place.phone ? `전화: ${place.phone}<br>` : ''}
+                                    ${place.average_rating !== null ? `평점: <span class="average-rating">${place.average_rating}</span> / 5<br>` : '평점: 정보 없음<br>'}
+                                    <a href="${place.place_url}" target="_blank">자세한 정보 (영업시간, 사진 등)</a>
+                                  </div>` // <-- 여기 영업시간 문구 수정
+                    });
+                    infowindow.open(map, marker);
+                });
 
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    }
+                const listItem = document.createElement('div');
+                listItem.className = 'place-item';
+                listItem.innerHTML = `
+                    <h3>${place.place_name}</h3>
+                    <p>${place.address_name}</p>
+                    <p>전화: ${place.phone || '정보 없음'}</p>
+                    ${place.average_rating !== null ? `<p>평점: <span class="average-rating">${place.average_rating}</span> / 5</p>` : `<p>평점: 정보 없음</p>`}
+                    <p><a href="${place.place_url}" target="_blank">자세한 정보 (영업시간, 사진 등)</a></p> <hr>
+                `;
+                listEl.appendChild(listItem);
+            });
+        }
 
-    function getCurrentLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          initMap(lat, lng);
-        }, () => {
-          alert("위치 접근이 거부되었습니다.");
-        });
-      } else {
-        alert("이 브라우저는 위치 정보를 지원하지 않습니다.");
-      }
-    }
+        function addMarker(position, idx, title) {
+            var imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_number_round.png',
+                imageSize = new kakao.maps.Size(36, 37),
+                imgOptions =  {
+                    spriteSize : new kakao.maps.Size(36, 691),
+                    spriteOrigin : new kakao.maps.Point(0, (idx*46)+10),
+                    offset: new kakao.maps.Point(13, 37)
+                },
+                markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imgOptions),
+                marker = new kakao.maps.Marker({
+                    position: position,
+                    image: markerImage 
+                });
 
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      const input = document.getElementById('searchBox').value.trim();
-      if (input && currentPosition) {
-        currentQuery = input;
-        fetchHospitalsFromBackend(currentPosition.lat, currentPosition.lng, input);
-      }
-    });
+            marker.setMap(map);
+            markers.push(marker);
 
-    document.addEventListener("DOMContentLoaded", getCurrentLocation);
-  </script>
+            return marker;
+        }
+
+        function removeAllMarkers() {
+            for ( var i = 0; i < markers.length; i++ ) {
+                markers[i].setMap(null);
+            }   
+            markers = [];
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
 </body>
 </html>

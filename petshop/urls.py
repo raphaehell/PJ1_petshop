@@ -1,9 +1,11 @@
+# petshop/urls.py
+
 from django.urls import path
 from . import views
 
 urlpatterns = [
-    # path('test-kakao/', views.test_kakao, name='test_kakao'),  ← 요거 주석 처리하거나 삭제
-    path('find-places/', views.find_places_view, name='find_places'),
-    path('map/', views.map_test, name='map_test'),
-    path('submit-review/', views.submit_review, name='submit_review'),
+    path('find-places/', views.find_places_view, name='find_places'), # 주변 병원 검색 API
+    path('map/', views.map_test, name='map_test'), # 지도 페이지
+    path('submit-review/', views.submit_review, name='submit_review'), # 리뷰 제출 API
+    # 여기에 다른 petshop 관련 URL들을 추가할 수 있습니다.
 ]

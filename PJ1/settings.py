@@ -9,8 +9,13 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'YOUR_ACTUAL_SECRET_KEY')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+# 카카오 개발자 JavaScript 키와 REST API 키
+KAKAO_JAVASCRIPT_KEY = '489a8706d97d9b3a16dbf24ef26703b3'
+KAKAO_REST_API_KEY = '6532284ab7de940b523e395c1063087e'
+
+# allauth 관련 설정: 이 두 줄만 유지하고 아래 중복되는 설정은 삭제
+ACCOUNT_LOGIN_METHODS = ['email']
+ACCOUNT_SIGNUP_FIELDS = ['email']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -30,11 +35,13 @@ INSTALLED_APPS = [
     'order',
     'payment',
     'petshop',
+    'petmarket',
     'products',
     'user_accounts',
     'django_extensions',
     'django.contrib.sitemaps',
     'django.contrib.flatpages',
+    'shop.apps.ShopConfig',
 ]
 
 MIDDLEWARE = [
@@ -71,11 +78,11 @@ WSGI_APPLICATION = 'PJ1.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'PJ1'),  
-        'USER': os.environ.get('DB_USER', 'root'), 
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'WJDghldls3150!@'), 
-        'HOST': os.environ.get('DB_HOST', '127.0.0.1'), 
-        'PORT': os.environ.get('DB_PORT', '3306'),    
+        'NAME': os.environ.get('DB_NAME', 'PJ1'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'WJDghldls3150!@'),
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
         'OPTIONS': {
             'charset': 'utf8mb4',
         },
@@ -109,9 +116,7 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 LOGIN_REDIRECT_URL = '/'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+# 이전에 있던 ACCOUNT_EMAIL_REQUIRED, ACCOUNT_USERNAME_REQUIRED, ACCOUNT_AUTHENTICATION_METHOD 줄은 삭제됨
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -132,7 +137,7 @@ SOCIALACCOUNT_PROVIDERS = {
     },
     'kakao': {
         'APP': {
-            'client_id': os.environ.get('KAKAO_REST_API_KEY', ''),
+            'client_id': '6532284ab7de940b523e395c1063087e', # 실제 REST API 키
             'secret': '',
             'key': '',
         }
@@ -145,7 +150,3 @@ CACHES = {
         'LOCATION': 'django_cache',
     }
 }
-
-# ✅ 수정된 카카오 API 키 환경 변수 로드
-KAKAO_API_KEY = os.getenv('KAKAO_JAVASCRIPT_KEY')
-KAKAO_JAVASCRIPT_KEY = os.getenv("KAKAO_JAVASCRIPT_KEY")
